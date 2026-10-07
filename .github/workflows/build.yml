@@ -16,8 +16,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
           fetch-depth: 0
+
+      - name: Setup Submodules
+        run: |
+          git submodule update --init native/external/dobby
+          git submodule update --init native/external/xdl
+          git submodule update --init native/external/lsplant
+          cd native/external/lsplant
+          git checkout 7217ac6f41e2bda549e4acb54e632abb03e5ccaf
+          git submodule update --init lsplant/src/main/jni/external/dex_builder
+          cd lsplant/src/main/jni/external/dex_builder
+          git submodule update --init external/parallel_hashmap
+          cd ../../../../../../..
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -30,30 +42,6 @@ jobs:
         with:
           ndk-version: r26c
           link-to-sdk: true
-
-      - name: Build Helper DEX
-        run: |
-          mkdir -p build-tools
-          export ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
-          export D8_JAR="$(find $ANDROID_HOME/build-tools -name d8.jar | sort -V | tail -n1)"
-          
-          CLASSES="helper/classes"
-          mkdir -p "$CLASSES" native/generated
-          
-          javac -source 8 -target 8 -cp "$ANDROID_JAR" -d "$CLASSES" helper/src/io/github/skb8/unlockuwb/helper/*.java
-          java -cp "$D8_JAR" com.android.tools.r8.D8 --min-api 26 --output native/generated $(find "$CLASSES" -name '*.class')
-          mv native/generated/classes.dex native/generated/helper.dex
-          
-          python3 - native/generated/helper.dex native/jni/helper_dex.h <<'PY'
-          import sys
-          data = open(sys.argv[1], 'rb').read()
-          with open(sys.argv[2], 'w') as f:
-              f.write("#pragma once\n#include <cstddef>\n")
-              f.write("static const unsigned char kHelperDex[] = {")
-              f.write(",".join(str(b) for b in data))
-              f.write("};\n")
-              f.write(f"static const size_t kHelperDexLen = {len(data)};\n")
-          PY
 
       - name: Build arm64-v8a
         run: |
