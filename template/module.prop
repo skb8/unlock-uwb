@@ -1,0 +1,6 @@
+id=unlock_uwb
+name=Unlock UWB
+version=v1.0.0
+versionCode=100
+author=skb8
+description=Unlock UWB (Ultra-Wideband) and UWB Labs engineering menu on Samsung One UI & Android via Zygisk + LSPlant.

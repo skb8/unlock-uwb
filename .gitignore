@@ -1,0 +1,11 @@
+build/
+release/
+output/
+classes/
+*.class
+*.dex
+.idea/
+.gradle/
+*.iml
+*.swp
+*~
