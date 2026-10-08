@@ -1,70 +1,59 @@
 # Unlock UWB (Zygisk + LSPlant)
 
-Модуль Magisk / KernelSU / APatch для разблокировки функционала **Ultra-Wideband (UWB)** и инженерного меню **UWB Labs** на смартфонах Samsung Galaxy (One UI) и Android-устройствах.
+[English](README.md) | [Русский](README.ru.md)
 
----
+A Magisk / KernelSU / APatch module that unlocks **Ultra-Wideband (UWB)** features and the **UWB Labs** engineering menu on Samsung Galaxy (One UI) phones and other Android devices.
 
-## 📌 Что делает этот модуль
+## What this module does
 
-1. **Разблокировка меню и тумблера UWB в Настройках One UI**:
-   - Обходит ограничения `isMenuUnavailable()`, `isRestrictionMode()` и `isRegulationMode`.
-   - Принудительно включает поддержку в `com.samsung.android.settings.uwb.UwbPreferenceController` и AOSP-контроллере.
-2. **Активация скрытого инженерного меню UWB Labs**:
-   - Автоматически включает `mLabsEnabled` и системное свойство `uwb.labs.enable = true`.
-   - Открывает доступ к встроенным тестам:
-     - **FiRa One-to-One Ranging Test** (`UwbFiraTestFragment`);
-     - **Simple Ranging Test** (`UwbSimpleTestFragment`);
-     - **DL-TDoA Test** (`UwbDltdoaTestFragment`);
-     - Расширенная статистика и история сессий.
-3. **Обход регуляторных ограничений региона (каналы 5 и 9)**:
-   - В системном сервисе (`system_server`) подменяет код страны на разрешённый (`US`) в `CountryDetectorService` и `UwbCountryCode`.
-   - Внедряет флаг Samsung HAL: `uwb.regulation.skip = true` (пропуск проверки регуляторного домена на уровне UCI-прошивки чипа).
-4. **Аппаратная фича**:
-   - Включает системный дескриптор `android.hardware.uwb` через systemless overlay `/vendor/etc/permissions/android.hardware.uwb.xml`.
+1. **Unlocks the UWB menu and toggle in One UI Settings** by bypassing `isMenuUnavailable()`, `isRestrictionMode()`, and `isRegulationMode` checks in Samsung and AOSP controllers.
+2. **Enables the hidden UWB Labs menu** by setting `mLabsEnabled` and the `uwb.labs.enable` system property. This provides access to built-in tests:
+   - FiRa One-to-One Ranging Test (`UwbFiraTestFragment`)
+   - Simple Ranging Test (`UwbSimpleTestFragment`)
+   - DL-TDoA Test (`UwbDltdoaTestFragment`)
+   - Extended statistics and session history
+3. **Bypasses regional restrictions for channels 5 and 9** by overriding the country code with an allowed value (`US`) in `CountryDetectorService` and `UwbCountryCode`, and setting the Samsung HAL flag `uwb.regulation.skip = true` to skip regulatory-domain checks in the chip firmware.
+4. **Enables the Android hardware feature declaration** `android.hardware.uwb` through a systemless overlay at `/vendor/etc/permissions/android.hardware.uwb.xml`.
 
----
+## Architecture
 
-## 🛠 Архитектура
+This is a **Zygisk module** powered by **LSPlant**, the ART hooking engine also used by LSPosed. It hooks into processes as they start:
 
-Модуль работает как **Zygisk-модуль**, использующий библиотеку **LSPlant** (тот же движок перехвата ART, что и в LSPosed), внедряясь напрямую при старте процессов:
+- `com.android.settings`: bypasses UWB availability checks.
+- `system_server`: hooks country-detection methods.
+- Native code and system properties: sets `uwb.regulation.skip` and `uwb.labs.enable` before services initialize.
 
-* **`com.android.settings`**: Перехват и нейтрализация проверок доступности UWB.
-* **`system_server`**: Перехват методов детекции страны.
-* **Native / System Properties**: Установка проперти `uwb.regulation.skip` и `uwb.labs.enable` до инициализации служб.
+## Installation
 
----
+1. Download the latest `unlock-uwb-v*.zip` from [Releases](https://github.com/skb8/unlock-uwb/releases) or from the Actions artifacts.
+2. Install the ZIP using **Magisk**, **KernelSU**, or **APatch**. The archive also includes the installer files required for recovery flashing.
+3. Make sure **Zygisk** is enabled in your root manager.
+4. Reboot your device.
+5. Open **Settings → Connections → Ultra-Wideband (UWB)**. The option should be enabled and open **UWB Labs**.
 
-## 🚀 Установка
+> **Note:** UWB requires a physical UWB chip. On Samsung devices, this is available on Plus, Ultra, and Fold models starting with the Galaxy S21+ / S21 Ultra generation.
 
-1. Скачайте последний архив `unlock-uwb-v*.zip` из раздела **Releases** или артефактов **Actions**.
-2. Установите архив в **Magisk**, **KernelSU** или **APatch**.
-3. Убедитесь, что **Zygisk** включен в настройках вашего root-менеджера.
-4. Перезагрузите устройство.
-5. Откройте **Настройки** -> **Подключения** -> **Ultra-Wideband (UWB)**. Пункт станет активным и откроет экран **UWB Labs**.
+## Build
 
-> **Примечание:** Для физической работы UWB устройство должно иметь аппаратный чип UWB (на устройствах Samsung это линейки Plus / Ultra / Fold начиная с Galaxy S21+/S21 Ultra).
+### GitHub Actions
 
----
+Every push to `main` builds an artifact. Pushing a version tag such as `v1.0.0` builds the release ZIP with `arm64-v8a` and `armeabi-v7a` libraries and publishes a GitHub Release.
 
-## 🏗 Сборка
+### Local build
 
-### Автоматическая сборка (GitHub Actions)
-В репозиторий встроен workflow GitHub Actions. Любой коммит в ветку `main` или создание тега версии (`v1.0.0`) автоматически собирает релизный ZIP-архив с библиотеками для `arm64-v8a` и `armeabi-v7a`.
+Requirements:
 
-### Локальная сборка
-Требуется:
-- Android NDK (r26c или новее);
-- Python 3;
-- CMake 3.22+;
-- Java JDK 17+.
+- Android NDK r26c or newer
+- Python 3
+- CMake 3.22 or newer
+- Java JDK 17 or newer
 
 ```bash
-# 1. Клонирование с рекурсивными субмодулями
 git clone --recursive https://github.com/skb8/unlock-uwb.git
 cd unlock-uwb
 
-# 2. Компиляция и упаковка
 export ANDROID_NDK_HOME=/path/to/android-ndk
 python3 build.py
 ```
-Готовый архив появится в каталоге `release/`.
+
+The completed archive will be placed in `release/`.
