@@ -68,12 +68,12 @@ jobs:
       - name: Package Module ZIP
         run: |
           mkdir -p release/zygisk
-          cp -r template/* release/
+          cp -r template/. release/
           cp build/arm64-v8a/libunlock_uwb.so release/zygisk/arm64-v8a.so
           cp build/armeabi-v7a/libunlock_uwb.so release/zygisk/armeabi-v7a.so
           
           cd release
-          zip -r ../unlock-uwb-v1.0.0.zip *
+          zip -r ../unlock-uwb-v1.0.0.zip .
           cd ..
 
       - name: Upload Artifact
